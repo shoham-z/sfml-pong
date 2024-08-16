@@ -20,7 +20,6 @@ const float block_width = 25.f, block_height = 120.f, ball_size = 20.f, ball_spe
 
 // ball direction
 
-
 // global vars (since i want to organize the code into functions, and it would be easier then passing arguments and returning them UNLESS I PASS REFERENCES AS ARGUMENTS)
 unsigned int player_wins = 0, bot_wins = 0;
 vector player_position;
@@ -63,13 +62,30 @@ int main()
             {
                 window.close();
             }
+            if (event.type == sf::Event::KeyPressed)
+            {
+                // if there are too many key pressed event, use this: window.setKeyRepeatEnabled(false)
+            }
+
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
+            {
+                player_position.y-=15;
+                //std::cout << sf::Keyboard::W << " W" << std::endl;
+            }
+            if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
+            {
+                player_position.y+=15;
+                //std::cout << sf::Keyboard::S << " S" << std::endl;
+            }
         }
+        player.setPosition(player_position.x, player_position.y);
 
         handle_ball();
 
         // handle ball movement
-        // 1. move the ball in the direction set for it
-        // 2. handle collision with the ceiling or floor
+        // 1. move the ball in the direction set for it - done
+        // 2. handle collision with the ceiling or floor - not sure yet(probably not)
+        // ball and player position is at the top left - in javascript player position was from top left and ball position was from center
         // handle player movement
         // handle opponent(bot) movement
 
@@ -86,7 +102,8 @@ int main()
     }
 }
 
-void start_game(){
+void start_game()
+{
     // reset everythings that is needed for a new round of the game
     player_position = {30.f, (float)screen_height / 2.f - block_height / 2.f};
     opponent_position = {(float)screen_width - 30.f - block_width, (float)screen_height / 2.f - block_height / 2.f};
@@ -116,12 +133,13 @@ void handle_ball()
         start_game();
     }
     // else check if the ball collided with the player block
-    else if (ball_position.x - ball_size - player_position.x - block_width < 0.5 &&
-             ball_position.y - player_position.y < block_height / 2 + ball_size / 2 &&
-             ball_position.y - player_position.y > -block_height / 2 - ball_size / 2)
+    else if (ball_position.x - player_position.x - block_width < 0.5 &&
+             ball_position.y + ball_size - player_position.y < block_height / 2 + ball_size / 2 &&
+             ball_position.y + ball_size - player_position.y > -block_height / 2 - ball_size / 2)
     {
         std::cout << "in player" << std::endl;
-        ball_direction = {ball_position.x - (player_position.x + block_width / 2) , ball_position.y - player_position.y};
+        //ball_dir = (ball_position.y + ball_size - player_position.y) / (ball_position.x + ball_size - (player_position.x + block_width / 2));
+        ball_direction.x = -ball_direction.x;
     }
     // else check if the ball collided with the bot block
     else if (opponent_position.x - ball_position.x - ball_size < 0.5 &&
@@ -129,7 +147,7 @@ void handle_ball()
              ball_position.y - opponent_position.y > -ball_size)
     {
         std::cout << "in opponent" << std::endl;
-        ball_direction = {(opponent_position.x + block_width / 2) - ball_position.x , (opponent_position.y + block_height / 2) - ball_position.y};
+        ball_direction = {(opponent_position.x + block_width / 2) - ball_position.x, (opponent_position.y + block_height / 2) - ball_position.y};
     }
 
     ball_position = {ball_position.x + ball_direction.x * ball_speed, ball_position.y + ball_direction.y * ball_speed};
