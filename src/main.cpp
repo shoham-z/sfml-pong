@@ -12,11 +12,13 @@ struct vector
     float x, y;
 };
 void handle_ball();
+void handle_bot();
+//void handle_player();
 void start_game();
 
 // constants
 const unsigned int screen_height = 720u, screen_width = 1280u;
-const float block_width = 25.f, block_height = 120.f, ball_size = 20.f, ball_speed = 10.f;
+const float block_width = 25.f, block_height = 120.f, ball_size = 20.f, ball_speed = 7.5f, bot_step = 15;
 
 // ball direction
 
@@ -69,24 +71,26 @@ int main()
 
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::W))
             {
-                player_position.y-=15;
-                //std::cout << sf::Keyboard::W << " W" << std::endl;
+                player_position.y -= 15;
+                // std::cout << sf::Keyboard::W << " W" << std::endl;
             }
             if (sf::Keyboard::isKeyPressed(sf::Keyboard::S))
             {
-                player_position.y+=15;
-                //std::cout << sf::Keyboard::S << " S" << std::endl;
+                player_position.y += 15;
+                // std::cout << sf::Keyboard::S << " S" << std::endl;
             }
         }
         player.setPosition(player_position.x, player_position.y);
+
+        handle_bot();
+        opponent.setPosition(opponent_position.x, opponent_position.y);
 
         handle_ball();
 
         // handle ball movement
         // 1. move the ball in the direction set for it - done
-        // 2. handle collision with the ceiling or floor - not sure yet(probably not)
-        // ball and player position is at the top left - in javascript player position was from top left and ball position was from center
-        // handle player movement
+        // 2. handle collision with the ceiling or floor - done
+        // handle player movement - done. might change it to be controlled with the mouse
         // handle opponent(bot) movement
 
         // clear the window with black color
@@ -112,11 +116,17 @@ void start_game()
     ball_direction = {(float)std::cos(ball_dir), (float)std::sin(ball_dir)};
 }
 
+void handle_bot()
+{
+    if(ball_position.y<opponent_position.y + block_height / 2 - bot_step){
+        opponent_position.y -= bot_step;
+    } else if(ball_position.y>opponent_position.y + block_height / 2 + bot_step){
+        opponent_position.y += bot_step;
+    }
+}
+
 void handle_ball()
 {
-
-    // add collision logic
-
     // first check if the ball hit the bottom or top borders
     if (ball_position.y < 0 || ball_position.y + ball_size * 2 > screen_height - 1)
     {
@@ -127,27 +137,28 @@ void handle_ball()
 
     else if (ball_position.x - ball_size < 1 || ball_position.x + ball_size > screen_width)
     {
-        std::cout << "someone won" << std::endl;
+        std::cout << "someone won " << std::endl;
         // restart game
         (ball_position.x - ball_size < 1) ? bot_wins += 1 : player_wins += 1;
         start_game();
     }
     // else check if the ball collided with the player block
     else if (ball_position.x - player_position.x - block_width < 0.5 &&
-             ball_position.y + ball_size - player_position.y < block_height / 2 + ball_size / 2 &&
-             ball_position.y + ball_size - player_position.y > -block_height / 2 - ball_size / 2)
+             ball_position.y + ball_size - player_position.y < block_height &&
+             ball_position.y + ball_size - player_position.y > 0)
+    /////// problem in the height check - y related values
     {
         std::cout << "in player" << std::endl;
-        //ball_dir = (ball_position.y + ball_size - player_position.y) / (ball_position.x + ball_size - (player_position.x + block_width / 2));
+        // ball_dir = (ball_position.y + ball_size - player_position.y) / (ball_position.x + ball_size - (player_position.x + block_width / 2));
         ball_direction.x = -ball_direction.x;
     }
     // else check if the ball collided with the bot block
-    else if (opponent_position.x - ball_position.x - ball_size < 0.5 &&
-             ball_position.y - opponent_position.y < block_height + ball_size &&
-             ball_position.y - opponent_position.y > -ball_size)
+    else if (opponent_position.x - ball_position.x - ball_size * 2 < 0.5 &&
+             ball_position.y + ball_size - opponent_position.y < block_height &&
+             ball_position.y + ball_size - opponent_position.y > 0)
     {
         std::cout << "in opponent" << std::endl;
-        ball_direction = {(opponent_position.x + block_width / 2) - ball_position.x, (opponent_position.y + block_height / 2) - ball_position.y};
+        ball_direction.x = -ball_direction.x;
     }
 
     ball_position = {ball_position.x + ball_direction.x * ball_speed, ball_position.y + ball_direction.y * ball_speed};
